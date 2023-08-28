@@ -1,26 +1,49 @@
 package wordcounter;
 
+
+import org.chris.wordcounter.Translator;
 import org.chris.wordcounter.impl.WordCounter;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mock;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.*;
 
 public class WordCounterTest {
 
 
 
-    private WordCounter wordCounter;
+    private static WordCounter wordCounter;
+    @Mock
+    private static Translator translator;
     //Setup
-    // TODO Mock Translate?
-    @BeforeAll
-    public void setUp()  {
+   @BeforeAll
+    static void setUp()  {
         wordCounter = new WordCounter();
+        translator = mock(Translator.class);
     }
 
+    @Test
+    void givenACollectionOfValidNonEnglishWords_whenAddWordsCalled_thenReturnEnglishTranslation(){
+        when(translator.translate("hola")).thenReturn("hello");
+        when(translator.translate("mundo")).thenReturn("world");
+
+        List<String> validNonEnglishWords = Arrays.asList("hola", "mundo");
+
+        assertTrue(validNonEnglishWords.stream()
+                .allMatch(word -> {
+                    String translatedWord = translator.translate(word);
+                    return translatedWord.equals("hello") || translatedWord.equals("world");
+                }));
+
+        verify(translator, times(2)).translate(anyString());
+    }
     @Test
     void givenACollectionOfValidWords_whenAddWordsCalled_thenReturnTheCountOfAddedWords(){
         List<String> validWords = Arrays.asList("hello", "world");
