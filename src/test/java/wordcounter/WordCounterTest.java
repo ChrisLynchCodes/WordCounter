@@ -11,19 +11,19 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.NullAndEmptySource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.Mock;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.*;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
-
-
 class WordCounterTest {
 
     static WordCounter wordCounter;
     @Mock
     static Translator translator;
+    private static final Logger logger = LoggerFactory.getLogger(WordCounterImpl.class);
 
     @BeforeEach
     void setUp() {
@@ -45,7 +45,7 @@ class WordCounterTest {
                     try {
                         translatedWord = translator.translate(word);
                     } catch (TranslatorException e) {
-                        e.printStackTrace();
+                        logger.error(e.getMessage(), e);
                     }
                     return "hello".equals(translatedWord) || "world".equals(translatedWord);
                 }));
@@ -79,7 +79,7 @@ class WordCounterTest {
         assertEquals(0, wordCounter.getCount("12345"));
         assertEquals(1, wordCounter.getWordCountMap().size());
         assertTrue(wordCounter.getWordCountMap().containsKey("hello"));
-        assertTrue(!wordCounter.getWordCountMap().containsKey("12345"));
+        assertFalse(wordCounter.getWordCountMap().containsKey("12345"));
 
     }
 
@@ -91,8 +91,8 @@ class WordCounterTest {
         assertEquals(0, wordCounter.getCount("12345"));
         assertEquals(0, wordCounter.getCount("$$$"));
         assertEquals(0, wordCounter.getWordCountMap().size());
-        assertTrue(!wordCounter.getWordCountMap().containsKey("12345"));
-        assertTrue(!wordCounter.getWordCountMap().containsKey("$$$"));
+        assertFalse(wordCounter.getWordCountMap().containsKey("12345"));
+        assertFalse(wordCounter.getWordCountMap().containsKey("$$$"));
 
     }
 
@@ -112,7 +112,7 @@ class WordCounterTest {
     @Test
     void givenACollectionWithALongWord_whenAddWordsCalled_thenAddAndIncrement() throws TranslatorException {
         when(translator.translate(anyString())).thenReturn("longword");
-        String longWord = "longword";
+
         StringBuilder longWordsBuilder = new StringBuilder("longword");
         for (int i = 0; i < 10; i++) {
             longWordsBuilder.append(longWordsBuilder);
