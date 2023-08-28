@@ -16,8 +16,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.*;
 
- class WordCounterTest {
 
+class WordCounterTest {
 
     static WordCounter wordCounter;
     @Mock
@@ -29,6 +29,7 @@ import static org.mockito.Mockito.*;
         wordCounter = new WordCounter(translator);
     }
 
+    // add tests
     @Test
     void givenACollectionOfValidNonEnglishWords_whenAddWordsCalled_thenReturnEnglishTranslation() {
         when(translator.translate("hola")).thenReturn("hello");
@@ -46,12 +47,13 @@ import static org.mockito.Mockito.*;
     }
 
     @Test
-    void givenACollectionOfValidWords_whenAddWordsCalled_thenAddThedWords() {
+    void givenACollectionOfValidWords_whenAddWordsCalled_thenEnsureWordsAdded() {
         when(translator.translate("hello")).thenReturn("hello");
         when(translator.translate("world")).thenReturn("world");
 
         Collection<String> validWords = new ArrayList<>(Arrays.asList("hello", "world"));
         wordCounter.addWords(validWords);
+
         assertEquals(validWords.stream().anyMatch(word -> word.equals("hello")) ? 1 : 0, wordCounter.getCount("hello"));
         assertEquals(validWords.stream().anyMatch(word -> word.equals("world")) ? 1 : 0, wordCounter.getCount("world"));
     }
@@ -81,12 +83,12 @@ import static org.mockito.Mockito.*;
 
         Collection<String> validWords = new ArrayList<>(Arrays.asList("hello", "hello"));
         wordCounter.addWords(validWords);
-        int helloCount = wordCounter.getCount("hello");
 
-        assertEquals(validWords.stream().anyMatch(word -> word.equals("hello")) ? 2 : 0, helloCount);
+        assertEquals(validWords.stream().anyMatch(word -> word.equals("hello")) ? 2 : 0, wordCounter.getCount("hello"));
 
     }
 
+    // get tests
     @ParameterizedTest
     @NullAndEmptySource
     void givenANullAndEmptyValue_whenGetCountCalled_thenReturnZero(String word) {
