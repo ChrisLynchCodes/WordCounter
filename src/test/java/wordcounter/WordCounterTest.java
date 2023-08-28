@@ -3,34 +3,34 @@ package wordcounter;
 
 import org.chris.wordcounter.Translator;
 import org.chris.wordcounter.impl.WordCounter;
-import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.NullAndEmptySource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.Mock;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.*;
 
-public class WordCounterTest {
+ class WordCounterTest {
 
 
-
-    private static WordCounter wordCounter;
+    static WordCounter wordCounter;
     @Mock
-    private static Translator translator;
-    //Setup
-   @BeforeAll
-    static void setUp()  {
-        wordCounter = new WordCounter();
+    static Translator translator;
+
+    @BeforeEach
+    void setUp() {
         translator = mock(Translator.class);
+        wordCounter = new WordCounter(translator);
     }
 
     @Test
-    void givenACollectionOfValidNonEnglishWords_whenAddWordsCalled_thenReturnEnglishTranslation(){
+    void givenACollectionOfValidNonEnglishWords_whenAddWordsCalled_thenReturnEnglishTranslation() {
         when(translator.translate("hola")).thenReturn("hello");
         when(translator.translate("mundo")).thenReturn("world");
 
@@ -44,43 +44,74 @@ public class WordCounterTest {
 
         verify(translator, times(2)).translate(anyString());
     }
+
     @Test
-    void givenACollectionOfValidWords_whenAddWordsCalled_thenReturnTheCountOfAddedWords(){
-        List<String> validWords = Arrays.asList("hello", "world");
-        int wordCount = wordCounter.addWords(validWords);
-        assertEquals(validWords.size(), wordCount);
+    void givenACollectionOfValidWords_whenAddWordsCalled_thenAddThedWords() {
+        when(translator.translate("hello")).thenReturn("hello");
+        when(translator.translate("world")).thenReturn("world");
+
+        Collection<String> validWords = new ArrayList<>(Arrays.asList("hello", "world"));
+        wordCounter.addWords(validWords);
+        assertEquals(validWords.stream().anyMatch(word -> word.equals("hello")) ? 1 : 0, wordCounter.getCount("hello"));
+        assertEquals(validWords.stream().anyMatch(word -> word.equals("world")) ? 1 : 0, wordCounter.getCount("world"));
     }
     @Test
-    void givenACollectionWithOneInvalidWord_whenAddWordsCalled_thenReturnTheCountOfAddedWords(){
-        List<String> validWords = Arrays.asList("hello", "12345");
-        int wordCount = wordCounter.addWords(validWords);
-        assertEquals(validWords.size() -1, wordCount);
+    void givenACollectionWithOneInvalidWord_whenAddWordsCalled_thenAddOnlyOneWord(){
+        when(translator.translate("hello")).thenReturn("hello");
+
+        List<String> words = Arrays.asList("hello", "12345");
+        wordCounter.addWords(words);
+
+        assertEquals(words.stream().anyMatch(word -> word.equals("hello")) ? 1 : 0, wordCounter.getCount("hello"));
+        assertEquals(words.stream().anyMatch(word -> word.equals("12345")) ? 0 : 1, wordCounter.getCount("12345"));
+
     }
     @Test
-    void givenACollectionOfInvalidWords_whenAddWordsCalled_thenReturnZero(){
-        List<String> validWords = Arrays.asList("12345", "6789");
-        int wordCount = wordCounter.addWords(validWords);
-        assertEquals(0, wordCount);
+    void givenACollectionOfInvalidWords_whenAddWordsCalled_thenDoNotAdd(){
+        Collection<String> invalidWords = new ArrayList<>(Arrays.asList("12345", "$$$"));
+        wordCounter.addWords(invalidWords);
+
+        assertEquals(invalidWords.stream().anyMatch(word -> word.equals("12345")) ? 0 : 1, wordCounter.getCount("12345"));
+        assertEquals(invalidWords.stream().anyMatch(word -> word.equals("$$$")) ? 0 : 1, wordCounter.getCount("$$$"));
     }
 
     @Test
-    void givenAValidWord_whenGetCountCalled_thenReturnTheCountOfAddedWords(){
-        String word = "hello";
+    void givenACollectionWithOneDuplicateWord_whenAddWordsCalled_thenReturnTheCountOfAddedWords() {
+        when(translator.translate("hello")).thenReturn("hello");
+
+        Collection<String> validWords = new ArrayList<>(Arrays.asList("hello", "hello"));
+        wordCounter.addWords(validWords);
+        int helloCount = wordCounter.getCount("hello");
+
+        assertEquals(validWords.stream().anyMatch(word -> word.equals("hello")) ? 2 : 0, helloCount);
+
+    }
+
+    @ParameterizedTest
+    @NullAndEmptySource
+    void givenANullAndEmptyValue_whenGetCountCalled_thenReturnZero(String word) {
         int count = wordCounter.getCount(word);
+
+        assertEquals(0, count);
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"hello"})
+    void givenAValidWord_whenGetCountCalled_thenReturnTheCountOfAddedWord(String word) {
+        when(translator.translate("hello")).thenReturn("hello");
+
+        wordCounter.addWords(Collections.singletonList(word));
+        int count = wordCounter.getCount(word);
+
         assertEquals(1, count);
     }
-    @Test
-    void givenAnInvalidWord_whenGetCountCalled_thenReturnZero(){
-        String word = "12345";
-        int count = wordCounter.getCount(word);
-        assertEquals(0, count);
-    }
-    @Test
-    void givenAValidNotAddedWord_whenGetCountIsCalled_thenReturnZero(){
-        String word = "zero";
-        int count = wordCounter.getCount(word);
-        assertEquals(0, count);
 
+    @ParameterizedTest
+    @ValueSource(strings = {"zero", "1234"})
+    void givenAValidNotAddedWordAndAnInvalidWord_whenGetCountIsCalled_thenReturnZero(String word) {
+        int count = wordCounter.getCount(word);
+
+        assertEquals(0, count);
     }
 
 
